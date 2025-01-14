@@ -2,6 +2,7 @@
 <html>
 <head>
     <style>
+        /* Estilos previos sin cambios... */
         body {
             margin: 0;
             padding: 20px;
@@ -136,44 +137,47 @@
 </head>
 <body>
     <h1 class="page-title">Relojes Mundiales</h1>
-    <div class="world-clocks" id="worldClocks">
-        <!-- Los relojes se añadirán aquí dinámicamente -->
-    </div>
+    <div class="world-clocks" id="worldClocks"></div>
 
     <script>
         const cities = [
-            { name: 'Buenos Aires', timezone: 'America/Argentina/Buenos_Aires', country: 'Argentina', flag: '🇦🇷' },
-            { name: 'Santiago', timezone: 'America/Santiago', country: 'Chile', flag: '🇨🇱' },
-            { name: 'Brasilia', timezone: 'America/Sao_Paulo', country: 'Brasil', flag: '🇧🇷' },
-            { name: 'Washington DC', timezone: 'America/New_York', country: 'Estados Unidos', flag: '🇺🇸' },
-            { name: 'Ciudad de México', timezone: 'America/Mexico_City', country: 'México', flag: '🇲🇽' },
-            { name: 'Ottawa', timezone: 'America/Toronto', country: 'Canadá', flag: '🇨🇦' },
-            { name: 'París', timezone: 'Europe/Paris', country: 'Francia', flag: '🇫🇷' },
-            { name: 'Lisboa', timezone: 'Europe/Lisbon', country: 'Portugal', flag: '🇵🇹' },
-            { name: 'Roma', timezone: 'Europe/Rome', country: 'Italia', flag: '🇮🇹' },
-            { name: 'Berlín', timezone: 'Europe/Berlin', country: 'Alemania', flag: '🇩🇪' },
-            { name: 'Mónaco', timezone: 'Europe/Monaco', country: 'Mónaco', flag: '🇲🇨' },
-            { name: 'Sídney', timezone: 'Australia/Sydney', country: 'Australia', flag: '🇦🇺' },
-            { name: 'Doha', timezone: 'Asia/Qatar', country: 'Qatar', flag: '🇶🇦' }
+            { name: 'Buenos Aires', timezone: 'America/Argentina/Buenos_Aires', country: 'Argentina', flag: '🇦🇷', offset: -3 },
+            { name: 'Santiago', timezone: 'America/Santiago', country: 'Chile', flag: '🇨🇱', offset: -3 },
+            { name: 'Brasilia', timezone: 'America/Sao_Paulo', country: 'Brasil', flag: '🇧🇷', offset: -3 },
+            { name: 'Washington DC', timezone: 'America/New_York', country: 'Estados Unidos', flag: '🇺🇸', offset: -5 },
+            { name: 'Ciudad de México', timezone: 'America/Mexico_City', country: 'México', flag: '🇲🇽', offset: -6 },
+            { name: 'Ottawa', timezone: 'America/Toronto', country: 'Canadá', flag: '🇨🇦', offset: -5 },
+            { name: 'París', timezone: 'Europe/Paris', country: 'Francia', flag: '🇫🇷', offset: 1 },
+            { name: 'Lisboa', timezone: 'Europe/Lisbon', country: 'Portugal', flag: '🇵🇹', offset: 0 },
+            { name: 'Roma', timezone: 'Europe/Rome', country: 'Italia', flag: '🇮🇹', offset: 1 },
+            { name: 'Berlín', timezone: 'Europe/Berlin', country: 'Alemania', flag: '🇩🇪', offset: 1 },
+            { name: 'Mónaco', timezone: 'Europe/Monaco', country: 'Mónaco', flag: '🇲🇨', offset: 1 },
+            { name: 'Sídney', timezone: 'Australia/Sydney', country: 'Australia', flag: '🇦🇺', offset: 11 },
+            { name: 'Doha', timezone: 'Asia/Qatar', country: 'Qatar', flag: '🇶🇦', offset: 3 }
         ];
+
+        function getTimeInTimezone(offset) {
+            const d = new Date();
+            const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+            return new Date(utc + (3600000 * offset));
+        }
 
         function createClock(city) {
             const clockWrapper = document.createElement('div');
             clockWrapper.className = 'clock-wrapper';
             clockWrapper.innerHTML = `
                 <div class="city-name">${city.name}, ${city.country} <span class="flag">${city.flag}</span></div>
-                <div class="analog-clock">
-                    <div id="numbers-${city.name}"></div>
+                <div class="analog-clock" id="analog-${city.name}">
                     <div class="hand hour-hand"></div>
                     <div class="hand minute-hand"></div>
                     <div class="hand second-hand"></div>
                     <div class="center-dot"></div>
                 </div>
-                <div class="digital-clock">00:00:00</div>
-                <div class="date">1 de Enero, 2024</div>
+                <div class="digital-clock" id="digital-${city.name}">00:00:00</div>
+                <div class="date" id="date-${city.name}">1 de Enero, 2024</div>
             `;
 
-            // Añadir números
+            // Añadir números al reloj
             const clockFace = clockWrapper.querySelector('.analog-clock');
             for (let i = 1; i <= 12; i++) {
                 const number = document.createElement('div');
@@ -195,59 +199,50 @@
             return clockWrapper;
         }
 
-        function formatDate(date) {
+        function updateClock(city) {
+            const time = getTimeInTimezone(city.offset);
+            const hours = time.getHours();
+            const minutes = time.getMinutes();
+            const seconds = time.getSeconds();
+
+            // Actualizar reloj analógico
+            const hourDeg = ((hours % 12) * 30) + (minutes * 0.5);
+            const minuteDeg = minutes * 6;
+            const secondDeg = seconds * 6;
+
+            const analog = document.getElementById(`analog-${city.name}`);
+            analog.querySelector('.hour-hand').style.transform = `rotate(${hourDeg}deg)`;
+            analog.querySelector('.minute-hand').style.transform = `rotate(${minuteDeg}deg)`;
+            analog.querySelector('.second-hand').style.transform = `rotate(${secondDeg}deg)`;
+
+            // Actualizar reloj digital
+            const digital = document.getElementById(`digital-${city.name}`);
+            digital.textContent = time.toLocaleTimeString('es-ES', { hour12: false });
+
+            // Actualizar fecha
+            const dateEl = document.getElementById(`date-${city.name}`);
             const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
             const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
                           'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
             
-            return `${days[date.getDay()]}, ${date.getDate()} de ${months[date.getMonth()]} de ${date.getFullYear()}`;
-        }
-
-        function updateClocks() {
-            cities.forEach(city => {
-                const clockWrapper = document.querySelector(`[data-city="${city.name}"]`);
-                const now = new Date().toLocaleString('es-ES', { timeZone: city.timezone });
-                const date = new Date(now);
-
-                const hours = date.getHours();
-                const minutes = date.getMinutes();
-                const seconds = date.getSeconds();
-                const milliseconds = date.getMilliseconds();
-
-                // Actualizar reloj analógico con movimiento suave
-                const hourDeg = (hours % 12 + minutes / 60) * 30;
-                const minuteDeg = (minutes + seconds / 60) * 6;
-                const secondDeg = (seconds + milliseconds / 1000) * 6;
-
-                const clock = clockWrapper.querySelector('.analog-clock');
-                clock.querySelector('.hour-hand').style.transform = `rotate(${hourDeg}deg)`;
-                clock.querySelector('.minute-hand').style.transform = `rotate(${minuteDeg}deg)`;
-                clock.querySelector('.second-hand').style.transform = `rotate(${secondDeg}deg)`;
-
-                // Actualizar reloj digital
-                const digitalTime = [
-                    hours.toString().padStart(2, '0'),
-                    minutes.toString().padStart(2, '0'),
-                    seconds.toString().padStart(2, '0')
-                ].join(':');
-                clockWrapper.querySelector('.digital-clock').textContent = digitalTime;
-
-                // Actualizar fecha completa
-                clockWrapper.querySelector('.date').textContent = formatDate(date);
-            });
-
-            requestAnimationFrame(updateClocks);
+            dateEl.textContent = `${days[time.getDay()]}, ${time.getDate()} de ${months[time.getMonth()]} de ${time.getFullYear()}`;
         }
 
         // Inicializar relojes
         const worldClocks = document.getElementById('worldClocks');
         cities.forEach(city => {
             const clock = createClock(city);
-            clock.setAttribute('data-city', city.name);
             worldClocks.appendChild(clock);
         });
 
-        updateClocks();
+        // Actualizar relojes cada segundo
+        function updateAllClocks() {
+            cities.forEach(updateClock);
+        }
+
+        // Actualizar inmediatamente y luego cada segundo
+        updateAllClocks();
+        setInterval(updateAllClocks, 1000);
     </script>
 </body>
 </html>
