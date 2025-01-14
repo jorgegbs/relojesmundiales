@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #1a1a1a, #2c3e50);
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        .world-clocks {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .clock-wrapper {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .clock-wrapper:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .city-name {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #ecf0f1;
+            text-align: center;
+        }
+
+        .flag {
+            font-size: 2em;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .analog-clock {
+            width: 200px;
+            height: 200px;
+            border: 8px solid #ecf0f1;
+            border-radius: 50%;
+            position: relative;
+            margin: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom;
+            background: #ecf0f1;
+            border-radius: 5px;
+            z-index: 3;
+        }
+
+        .hour-hand {
+            width: 6px;
+            height: 25%;
+            background: #e74c3c;
+        }
+
+        .minute-hand {
+            width: 4px;
+            height: 35%;
+            background: #3498db;
+        }
+
+        .second-hand {
+            width: 2px;
+            height: 40%;
+            background: #2ecc71;
+        }
+
+        .center-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #ecf0f1;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 4;
+        }
+
+        .digital-clock {
+            font-size: 2em;
+            margin: 10px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .date {
+            font-size: 1em;
+            color: #bdc3c7;
+            margin-bottom: 5px;
+        }
+
+        .number {
+            position: absolute;
+            font-size: 16px;
+            color: #ecf0f1;
+            text-align: center;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            transform-origin: center;
+            z-index: 2;
+            font-weight: bold;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 2.5em;
+            margin: 20px 0;
+            color: #ecf0f1;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <h1 class="page-title">Relojes Mundiales</h1>
+    <div class="world-clocks" id="worldClocks">
+        <!-- Los relojes se añadirán aquí dinámicamente -->
+    </div>
+
+    <script>
+        const cities = [
+            { name: 'Buenos Aires', timezone: 'America/Argentina/Buenos_Aires', country: 'Argentina', flag: '🇦🇷' },
+            { name: 'Santiago', timezone: 'America/Santiago', country: 'Chile', flag: '🇨🇱' },
+            { name: 'Brasilia', timezone: 'America/Sao_Paulo', country: 'Brasil', flag: '🇧🇷' },
+            { name: 'Washington DC', timezone: 'America/New_York', country: 'Estados Unidos', flag: '🇺🇸' },
+            { name: 'Ciudad de México', timezone: 'America/Mexico_City', country: 'México', flag: '🇲🇽' },
+            { name: 'Ottawa', timezone: 'America/Toronto', country: 'Canadá', flag: '🇨🇦' },
+            { name: 'París', timezone: 'Europe/Paris', country: 'Francia', flag: '🇫🇷' },
+            { name: 'Lisboa', timezone: 'Europe/Lisbon', country: 'Portugal', flag: '🇵🇹' },
+            { name: 'Roma', timezone: 'Europe/Rome', country: 'Italia', flag: '🇮🇹' },
+            { name: 'Berlín', timezone: 'Europe/Berlin', country: 'Alemania', flag: '🇩🇪' },
+            { name: 'Mónaco', timezone: 'Europe/Monaco', country: 'Mónaco', flag: '🇲🇨' },
+            { name: 'Sídney', timezone: 'Australia/Sydney', country: 'Australia', flag: '🇦🇺' },
+            { name: 'Doha', timezone: 'Asia/Qatar', country: 'Qatar', flag: '🇶🇦' }
+        ];
+
+        function createClock(city) {
+            const clockWrapper = document.createElement('div');
+            clockWrapper.className = 'clock-wrapper';
+            clockWrapper.innerHTML = `
+                <div class="city-name">${city.name}, ${city.country} <span class="flag">${city.flag}</span></div>
+                <div class="analog-clock">
+                    <div id="numbers-${city.name}"></div>
+                    <div class="hand hour-hand"></div>
+                    <div class="hand minute-hand"></div>
+                    <div class="hand second-hand"></div>
+                    <div class="center-dot"></div>
+                </div>
+                <div class="digital-clock">00:00:00</div>
+                <div class="date">1 de Enero, 2024</div>
+            `;
+
+            // Añadir números
+            const clockFace = clockWrapper.querySelector('.analog-clock');
+            for (let i = 1; i <= 12; i++) {
+                const number = document.createElement('div');
+                number.className = 'number';
+                number.textContent = i;
+                
+                const angle = (i * 30 - 90) * (Math.PI / 180);
+                const radius = 75;
+                const x = radius * Math.cos(angle);
+                const y = radius * Math.sin(angle);
+                
+                number.style.left = `${x + 100}px`;
+                number.style.top = `${y + 100}px`;
+                number.style.transform = 'translate(-50%, -50%)';
+                
+                clockFace.appendChild(number);
+            }
+
+            return clockWrapper;
+        }
+
+        function formatDate(date) {
+            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            
+            return `${days[date.getDay()]}, ${date.getDate()} de ${months[date.getMonth()]} de ${date.getFullYear()}`;
+        }
+
+        function updateClocks() {
+            cities.forEach(city => {
+                const clockWrapper = document.querySelector(`[data-city="${city.name}"]`);
+                const now = new Date().toLocaleString('es-ES', { timeZone: city.timezone });
+                const date = new Date(now);
+
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                const seconds = date.getSeconds();
+                const milliseconds = date.getMilliseconds();
+
+                // Actualizar reloj analógico con movimiento suave
+                const hourDeg = (hours % 12 + minutes / 60) * 30;
+                const minuteDeg = (minutes + seconds / 60) * 6;
+                const secondDeg = (seconds + milliseconds / 1000) * 6;
+
+                const clock = clockWrapper.querySelector('.analog-clock');
+                clock.querySelector('.hour-hand').style.transform = `rotate(${hourDeg}deg)`;
+                clock.querySelector('.minute-hand').style.transform = `rotate(${minuteDeg}deg)`;
+                clock.querySelector('.second-hand').style.transform = `rotate(${secondDeg}deg)`;
+
+                // Actualizar reloj digital
+                const digitalTime = [
+                    hours.toString().padStart(2, '0'),
+                    minutes.toString().padStart(2, '0'),
+                    seconds.toString().padStart(2, '0')
+                ].join(':');
+                clockWrapper.querySelector('.digital-clock').textContent = digitalTime;
+
+                // Actualizar fecha completa
+                clockWrapper.querySelector('.date').textContent = formatDate(date);
+            });
+
+            requestAnimationFrame(updateClocks);
+        }
+
+        // Inicializar relojes
+        const worldClocks = document.getElementById('worldClocks');
+        cities.forEach(city => {
+            const clock = createClock(city);
+            clock.setAttribute('data-city', city.name);
+            worldClocks.appendChild(clock);
+        });
+
+        updateClocks();
+    </script>
+</body>
+</html>
